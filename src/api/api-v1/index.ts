@@ -1,8 +1,12 @@
 import { NextFunction, Request, Response, Router } from "express";
+import { AuthenticationService } from "../../services/authentication.service/authentication.service";
+import { DatabaseService } from "../../services/database.service";
 import { ApiResponse } from "../utils/api-response";
 import { AuthenticationApi } from "./authentication";
 
 export class ApiV1 {
+
+    constructor(private auth: AuthenticationService, private db: DatabaseService){}
 
     public get router(): Router {
         const router = Router();
@@ -15,7 +19,7 @@ export class ApiV1 {
         });
 
         /* Authentication API */
-        new AuthenticationApi().install(router);
+        new AuthenticationApi(this.auth, this.db).install(router);
 
         return router;
     }

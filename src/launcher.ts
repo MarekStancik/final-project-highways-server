@@ -1,23 +1,22 @@
 import { ApiService } from "./services/api.service";
+import { ConfigService } from "./services/config.service";
 import { LogService } from "./services/log.service";
 
 export class ServerLauncher {
 
     private log: LogService;
-
+    
     constructor(){
-        this.log = new LogService();
+        this.log = LogService.instance
     }
 
-    public async run() : Promise<void> {
+    public run() : void {
         try {
             this.log.info("starting server");
 
-            const apiService = new ApiService(this.log);
-            apiService.initialize({
-                address: "",
-                port: 8080
-            });
+            const configService = new ConfigService("./config.yaml");
+            const apiService = new ApiService(configService);
+            apiService.initialize();
 
             this.log.info("server bootstrap finished");
         } catch (error) {

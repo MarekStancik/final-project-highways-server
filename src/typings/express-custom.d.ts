@@ -11,6 +11,5 @@ declare namespace Express {
         response?: RequestResponseHandle;
         user?: any;
         session?: any;
-        permissions?: any[];
     }
 }

@@ -1,25 +1,33 @@
 import express from "express";
 import expressWs from "express-ws";
 import expressBodyParser from "body-parser";
-import { fromEvent as observableFromEvent } from "rxjs";
-import { first, tap } from "rxjs/operators";
 import { Express, NextFunction, Request, Response } from "express";
 import { LogService } from "./log.service";
 import { ApiV1 } from "../api/api-v1";
 import { WsApiV1 } from "../api/ws-api-v1";
 import { ApiResponse } from "../api/utils/api-response";
 import { ApiError } from "../api/utils/api.error";
+import { AuthenticationService } from "./authentication.service/authentication.service";
+import { DatabaseService } from "./database.service";
+import { MongoDatabaseService } from "./mongo-database.service";
+import { ConfigService } from "./config.service";
 
 
 export class ApiService {
 
     private app: Express;
+    private db: DatabaseService;
+    private auth: AuthenticationService;
+    private log: LogService = LogService.instance
 
-    constructor(private log: LogService) {
+    constructor(private config: ConfigService) {
         this.app = express();
+
+        this.db = new MongoDatabaseService(this.config.data.db);
+        this.auth = new AuthenticationService(this.db);
     }
 
-    public initialize({address, port} : { address: string; port: number}) {
+    public initialize() : void {
         
         // Enable WebSockets
         expressWs(this.app);
@@ -34,7 +42,7 @@ export class ApiService {
         this.app.use(expressBodyParser.json());
 
         // Install API
-        this.app.use("/v1", new ApiV1().router);
+        this.app.use("/v1", new ApiV1(this.auth,this.db).router);
 
         // Install WebSocket API Version
         this.app.use("/ws/v1", new WsApiV1().router);
@@ -48,9 +56,10 @@ export class ApiService {
         // Handle errors 
         this.app.use(this.mwHandleErrors.bind(this));
 
-        // Start listening on provided address and port
-        this.app.listen(port, address);
-        this.log.info("api service has been started on %s:%d", address, port);
+        // Start listening on configured address and port
+        const api = this.config.data.api;
+        this.app.listen(api.port, api.host);
+        this.log.info("api service has been started on %s:%d", api.host, api.port);
     }
 
     private mwRequestStart(req: Request, res: Response, next: NextFunction): void {
@@ -63,6 +72,7 @@ export class ApiService {
     }
 
     private async mwRequestEnd(req: Request, res: Response, next: NextFunction): Promise<void> {
+        console.log(req)
         if (req.response) {
             if (req.response.body) {
                 res.status(req.response.httpStatus).send(req.response.body);
