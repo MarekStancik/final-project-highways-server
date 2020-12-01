@@ -1,8 +1,8 @@
 import { ApiService } from "./services/api.service";
 import { AuthenticationService } from "./services/authentication.service/authentication.service";
 import { ConfigService } from "./services/config.service";
+import { MongoDatabaseService } from "./services/database.service/mongo-database.service";
 import { LogService } from "./services/log.service";
-import { MongoDatabaseService } from "./services/mongo-database.service";
 
 export class ServerLauncher {
 
@@ -20,6 +20,8 @@ export class ServerLauncher {
             const dbService = new MongoDatabaseService(configService);
             const authService = new AuthenticationService(dbService);
             const apiService = new ApiService(configService,dbService,authService);
+
+            await dbService.initialize();
             apiService.initialize();
 
             this.log.info("server bootstrap finished");

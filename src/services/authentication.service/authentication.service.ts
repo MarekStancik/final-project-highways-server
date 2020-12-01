@@ -1,11 +1,11 @@
 import { Request, Response, NextFunction } from "express";
 import crypto from "crypto"
-import uuid from "uuid"
+import * as uuid from "uuid"
 import { ApiResponse } from "../../api/utils/api-response";
 import { UserSession, UserSpec, User } from "../../models";
 import { LogService } from "../log.service";
 import { AuthenticationError } from "./authentication.error";
-import { DatabaseService } from "../database.service";
+import { DatabaseService } from "../database.service/database.service";
 
 export class AuthenticationService {
 
@@ -24,6 +24,7 @@ export class AuthenticationService {
         session.user.id = user.id;
         session.token = uuid.v4();
         session.lifetime = 200000;
+        session.startDate = session.lastRequestDate = new Date();
         return await this.database.update(session);
     }
 
@@ -37,7 +38,7 @@ export class AuthenticationService {
             throw new AuthenticationError("User is disabled");
         }
         return {
-            id: user.id
+            id: user._id
         };
     }
 
@@ -53,8 +54,7 @@ export class AuthenticationService {
                     return ApiResponse.Error.Unauthorized(next);
                 }
 
-                const session = await this.getSessionByToken(sessionToken);
-                
+                const session = await this.getSessionByToken(sessionToken);                
                 session.lastRequestDate = new Date();
                 await this.database.update(session);
 

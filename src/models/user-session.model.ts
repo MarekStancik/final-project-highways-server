@@ -1,5 +1,6 @@
-export class UserSession {
-    id: string;
+import { DatabaseObject } from "./database-object.model";
+
+export class UserSession extends DatabaseObject{
     user: UserSpec;
     token: string;
     type: string;

@@ -1,6 +1,8 @@
-export class User {
-    id: string;
-    name: string;
+import { DatabaseObject } from "./database-object.model";
+
+export class User extends DatabaseObject{
+    _id: string;
+    username: string;
     password: string;
     enabled: boolean;
 }

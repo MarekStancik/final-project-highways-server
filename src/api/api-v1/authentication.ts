@@ -2,7 +2,7 @@ import { NextFunction, Request, Response, Router } from "express";
 import { UserSession } from "../../models";
 import { AuthenticationError } from "../../services/authentication.service/authentication.error";
 import { AuthenticationService } from "../../services/authentication.service/authentication.service";
-import { DatabaseService } from "../../services/database.service";
+import { DatabaseService } from "../../services/database.service/database.service";
 import { LogService } from "../../services/log.service";
 import { ApiResponse } from "../utils/api-response";
 
@@ -10,17 +10,20 @@ export class AuthenticationApi {
 
     private log: LogService = LogService.instance;
 
-    constructor(private authenticationService: AuthenticationService, private database: DatabaseService) {
+    constructor(
+        private authenticationService: AuthenticationService,
+        private database: DatabaseService
+    ) {
 
     }
 
-    public install(router: Router) : void {
+    public install(router: Router): void {
         router.post("/authentication", this.mwAuthenticate.bind(this));
         router.delete("/authentication", this.authenticationService.mwfRequireAuthentication(), this.mwLogout.bind(this));
         router.get("/authentication", this.authenticationService.mwfRequireAuthentication(), this.mwGetAuthenticationInfo.bind(this));
     }
 
-    private mwAuthenticate(req: Request, res: Response, next: NextFunction): void {
+    private async mwAuthenticate(req: Request, res: Response, next: NextFunction): Promise<void> {
         try {
             const username = req.body.username;
             const password = req.body.password;
@@ -28,7 +31,7 @@ export class AuthenticationApi {
                 return ApiResponse.Error.BadRequest(next);
             }
             try {
-                const session = this.authenticationService.authenticate(username, password);
+                const session = await this.authenticationService.authenticate(username, password);
                 return ApiResponse.Success.Ok(req, next, { sessionToken: session.token, sessionExpiryDate: new Date(session.startDate.getTime() + session.lifetime) });
             } catch (error) {
                 if (error instanceof AuthenticationError) {

@@ -1,9 +1,10 @@
 import { DatabaseService } from "./database.service";
-import { Cursor, Db, MongoClient } from "mongodb";
-import { LogService } from "./log.service";
+import { Collection, Cursor, Db, MongoClient } from "mongodb";
 import { timer } from "rxjs/internal/observable/timer";
 import { first } from "rxjs/operators";
-import { ConfigService } from "./config.service";
+import { ConfigService } from "../config.service";
+import { LogService } from "../log.service";
+import { DatabaseObject } from "../../models/database-object.model";
 
 export class MongoDatabaseService implements DatabaseService {
 
@@ -37,13 +38,13 @@ export class MongoDatabaseService implements DatabaseService {
         return this.client.db("mydatabase");
     }
 
-    public async create<T>(type: new () => T): Promise<T> {
+    public async create<T extends DatabaseObject>(type: new () => T): Promise<T> {
         const object: T = new type();
-        await this.database.collection(type.name.toLowerCase()).insertOne(object);
+        await this.collection(type).insertOne(object);
         return object;
     }
 
-    public async get<T>(type: new () => T, query?: any): Promise<T> {
+    public async get<T extends DatabaseObject>(type: new () => T, query?: any): Promise<T> {
         const list = await this.list(type,query);
         if (list.length > 1) {
             throw Error("bad query");
@@ -51,15 +52,23 @@ export class MongoDatabaseService implements DatabaseService {
         return list[0] || null;
     }
 
-    public async list<T>(type: new () => T, query?: any): Promise<T[]> {
-        throw new Error("Method not implemented.");
+    public async list<T extends DatabaseObject>(type: new () => T, query?: any): Promise<T[]> {
+        return await this.collection(type).find(query).toArray();
     }
-    public async update<T>(object: T): Promise<T> {
-        throw new Error("Method not implemented.");
+
+    public async update<T extends DatabaseObject>(object: T): Promise<T> {
+        await this.collection(object).updateOne({ _id: object._id},{ $set: object});
+        return object;
     }
     
-    public async delete<T>(object: T): Promise<T> {
-        throw new Error("Method not implemented.");
+    public async delete<T extends DatabaseObject>(object: T): Promise<void> {
+        await this.collection(object).deleteOne({ _id: object._id })
+    }
+
+    private collection<T>(x: T) : Collection<any>;
+    private collection<T>(x: new () => T) : Collection<any> {
+        const collectionName = x.name ? x.name : x.constructor.name;
+        return this.database.collection(collectionName.toLowerCase());
     }
 
 }

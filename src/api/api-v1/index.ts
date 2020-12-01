@@ -1,6 +1,6 @@
 import { NextFunction, Request, Response, Router } from "express";
 import { AuthenticationService } from "../../services/authentication.service/authentication.service";
-import { DatabaseService } from "../../services/database.service";
+import { DatabaseService } from "../../services/database.service/database.service";
 import { ApiResponse } from "../utils/api-response";
 import { AuthenticationApi } from "./authentication";
 

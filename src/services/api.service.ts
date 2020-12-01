@@ -8,9 +8,8 @@ import { WsApiV1 } from "../api/ws-api-v1";
 import { ApiResponse } from "../api/utils/api-response";
 import { ApiError } from "../api/utils/api.error";
 import { AuthenticationService } from "./authentication.service/authentication.service";
-import { DatabaseService } from "./database.service";
-import { MongoDatabaseService } from "./mongo-database.service";
 import { ConfigService } from "./config.service";
+import { DatabaseService } from "./database.service/database.service";
 
 
 export class ApiService {
@@ -21,7 +20,9 @@ export class ApiService {
     constructor(
         private config: ConfigService,
         private db: DatabaseService, 
-        private auth: AuthenticationService) {
+        private auth: AuthenticationService
+    ) {
+        this.app = express();
     }
 
     public initialize() : void {
@@ -69,7 +70,6 @@ export class ApiService {
     }
 
     private async mwRequestEnd(req: Request, res: Response, next: NextFunction): Promise<void> {
-        console.log(req)
         if (req.response) {
             if (req.response.body) {
                 res.status(req.response.httpStatus).send(req.response.body);
