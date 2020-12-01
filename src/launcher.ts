@@ -1,6 +1,8 @@
 import { ApiService } from "./services/api.service";
+import { AuthenticationService } from "./services/authentication.service/authentication.service";
 import { ConfigService } from "./services/config.service";
 import { LogService } from "./services/log.service";
+import { MongoDatabaseService } from "./services/mongo-database.service";
 
 export class ServerLauncher {
 
@@ -10,12 +12,14 @@ export class ServerLauncher {
         this.log = LogService.instance
     }
 
-    public run() : void {
+    public async run() : Promise<void> {
         try {
             this.log.info("starting server");
 
             const configService = new ConfigService("./config.yaml");
-            const apiService = new ApiService(configService);
+            const dbService = new MongoDatabaseService(configService);
+            const authService = new AuthenticationService(dbService);
+            const apiService = new ApiService(configService,dbService,authService);
             apiService.initialize();
 
             this.log.info("server bootstrap finished");

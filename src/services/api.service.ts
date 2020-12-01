@@ -16,15 +16,12 @@ import { ConfigService } from "./config.service";
 export class ApiService {
 
     private app: Express;
-    private db: DatabaseService;
-    private auth: AuthenticationService;
     private log: LogService = LogService.instance
 
-    constructor(private config: ConfigService) {
-        this.app = express();
-
-        this.db = new MongoDatabaseService(this.config.data.db);
-        this.auth = new AuthenticationService(this.db);
+    constructor(
+        private config: ConfigService,
+        private db: DatabaseService, 
+        private auth: AuthenticationService) {
     }
 
     public initialize() : void {
