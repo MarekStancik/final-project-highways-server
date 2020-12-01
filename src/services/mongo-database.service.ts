@@ -37,19 +37,28 @@ export class MongoDatabaseService implements DatabaseService {
         return this.client.db("mydatabase");
     }
 
-    create<T>(type: new () => T): T {
+    public async create<T>(type: new () => T): Promise<T> {
+        const object: T = new type();
+        await this.database.collection(type.name.toLowerCase()).insertOne(object);
+        return object;
+    }
+
+    public async get<T>(type: new () => T, query?: any): Promise<T> {
+        const list = await this.list(type,query);
+        if (list.length > 1) {
+            throw Error("bad query");
+        }
+        return list[0] || null;
+    }
+
+    public async list<T>(type: new () => T, query?: any): Promise<T[]> {
         throw new Error("Method not implemented.");
     }
-    get<T>(type: new () => T, query?: any): T {
+    public async update<T>(object: T): Promise<T> {
         throw new Error("Method not implemented.");
     }
-    list<T>(type: new () => T, query?: any): T[] {
-        throw new Error("Method not implemented.");
-    }
-    update<T>(object: T): T {
-        throw new Error("Method not implemented.");
-    }
-    delete<T>(object: T): T {
+    
+    public async delete<T>(object: T): Promise<T> {
         throw new Error("Method not implemented.");
     }
 
