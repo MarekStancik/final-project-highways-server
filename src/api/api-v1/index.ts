@@ -3,6 +3,7 @@ import { AuthenticationService } from "../../services/authentication.service/aut
 import { DatabaseService } from "../../services/database.service/database.service";
 import { ApiResponse } from "../utils/api-response";
 import { AuthenticationApi } from "./authentication";
+import { RoutesApi } from "./routes";
 
 export class ApiV1 {
 
@@ -20,6 +21,9 @@ export class ApiV1 {
 
         /* Authentication API */
         new AuthenticationApi(this.auth, this.db).install(router);
+
+        /* Routes API */
+        new RoutesApi(this.auth).install(router);
 
         return router;
     }

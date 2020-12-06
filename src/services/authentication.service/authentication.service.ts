@@ -23,7 +23,7 @@ export class AuthenticationService {
         session.user = new UserSpec();
         session.user.id = user.id;
         session.token = uuid.v4();
-        session.lifetime = 200000;
+        session.lifetime = 20000000;
         session.startDate = session.lastRequestDate = new Date();
         return await this.database.update(session);
     }
