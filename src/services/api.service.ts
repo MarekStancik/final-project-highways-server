@@ -10,6 +10,7 @@ import { ApiError } from "../api/utils/api.error";
 import { AuthenticationService } from "./authentication.service/authentication.service";
 import { ConfigService } from "./config.service";
 import { DatabaseService } from "./database.service/database.service";
+import { MockRouteService } from "./route.service/mock-route.service";
 
 
 export class ApiService {
@@ -43,7 +44,7 @@ export class ApiService {
         this.app.use("/v1", new ApiV1(this.auth,this.db).router);
 
         // Install WebSocket API Version
-        this.app.use("/ws/v1", new WsApiV1(this.auth,this.db).router);
+        this.app.use("/ws/v1", new WsApiV1(this.auth,new MockRouteService()).router);
 
         // Cleanup request data, send response
         this.app.use(this.mwRequestEnd.bind(this));
