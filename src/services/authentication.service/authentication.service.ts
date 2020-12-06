@@ -72,7 +72,7 @@ export class AuthenticationService {
         };
     }
 
-    private async getSessionByToken(token: string): Promise<UserSession> {
+    public async getSessionByToken(token: string): Promise<UserSession> {
         const session = await this.database.get(UserSession, {token});
         if (!session) {
             throw new AuthenticationError("Session not found", "SESSION_NOT_FOUND");

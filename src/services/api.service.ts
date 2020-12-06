@@ -43,7 +43,7 @@ export class ApiService {
         this.app.use("/v1", new ApiV1(this.auth,this.db).router);
 
         // Install WebSocket API Version
-        this.app.use("/ws/v1", new WsApiV1().router);
+        this.app.use("/ws/v1", new WsApiV1(this.auth,this.db).router);
 
         // Cleanup request data, send response
         this.app.use(this.mwRequestEnd.bind(this));
