@@ -1,7 +1,7 @@
 export class Route {
     id: string;
-    from: string;
-    to: string;
+    start: string;
+    end: string;
     name: string;
     length :number;
     avgTime: number;
