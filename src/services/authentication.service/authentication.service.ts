@@ -6,6 +6,7 @@ import { UserSession, UserSpec, User } from "../../models";
 import { LogService } from "../log.service";
 import { AuthenticationError } from "./authentication.error";
 import { DatabaseService } from "../database.service/database.service";
+import { AuthorizationType, OperationType, Permissions, ResourceType } from "../../models/permission.model";
 
 export class AuthenticationService {
 
@@ -13,7 +14,7 @@ export class AuthenticationService {
 
     private log: LogService = LogService.instance;
 
-    constructor(private database: DatabaseService){
+    constructor(private database: DatabaseService) {
 
     }
 
@@ -54,12 +55,12 @@ export class AuthenticationService {
                     return ApiResponse.Error.Unauthorized(next);
                 }
 
-                const session = await this.getSessionByToken(sessionToken);                
+                const session = await this.getSessionByToken(sessionToken);
                 session.lastRequestDate = new Date();
                 await this.database.update(session);
 
                 req.session = session;
-                req.user = await this.database.get(User,{id: session.user.id});
+                req.user = await this.database.get(User, { id: session.user.id });
 
                 return next();
             } catch (error) {
@@ -72,8 +73,26 @@ export class AuthenticationService {
         };
     }
 
+    public mwfRequireAuthorization(resource: ResourceType, operation: OperationType) {
+        return async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+            try {
+                if (!req.session) {
+                    throw new AuthenticationError("Authorization middleware may only be installed if authentication middleware is installed in the pipeline");
+                }
+                const session = await this.getSessionByToken(req.session.token);
+                const user = await this.database.get(User, {id: session.user.id});
+                if(!this.evaluatePermissions(resource,operation,user.authorization)){
+                    return next();
+                }
+                return ApiResponse.Error.PermissionDenied(next);
+            } catch (error) {
+                return ApiResponse.Error.InternalServerError(next, error);
+            }
+        }
+    }
+
     public async getSessionByToken(token: string): Promise<UserSession> {
-        const session = await this.database.get(UserSession, {token});
+        const session = await this.database.get(UserSession, { token });
         if (!session) {
             throw new AuthenticationError("Session not found", "SESSION_NOT_FOUND");
         }
@@ -83,4 +102,7 @@ export class AuthenticationService {
         return session;
     }
 
+    private evaluatePermissions(resource: ResourceType,operation: OperationType, role: AuthorizationType): boolean {
+        return Permissions[role][resource]?.includes(operation);
+    }
 }

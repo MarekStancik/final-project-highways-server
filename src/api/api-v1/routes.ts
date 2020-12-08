@@ -19,7 +19,7 @@ export class RoutesApi {
         router.get("/routes", this.authenticationService.mwfRequireAuthentication(), this.mwList.bind(this));
         router.post("/routes", this.authenticationService.mwfRequireAuthentication(), this.mwCreate.bind(this));
         router.delete("/routes/:id", this.authenticationService.mwfRequireAuthentication(), this.mwDelete.bind(this));
-        router.put("/routes/:id",this.authenticationService.mwfRequireAuthentication(),this.mwUpdate.bind(this));
+        router.put("/routes/:id",this.authenticationService.mwfRequireAuthentication(),this.authenticationService.mwfRequireAuthorization("route","update"),this.mwUpdate.bind(this));
     }
 
     public async mwUpdate(req: Request, res: Response, next: NextFunction) {

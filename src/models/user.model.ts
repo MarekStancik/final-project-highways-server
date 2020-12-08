@@ -1,8 +1,9 @@
 import { DatabaseObject } from "./database-object.model";
+import { AuthorizationType } from "./permission.model";
 
 export class User extends DatabaseObject{
-    _id: string;
     username: string;
     password: string;
     enabled: boolean;
+    authorization: AuthorizationType;
 }

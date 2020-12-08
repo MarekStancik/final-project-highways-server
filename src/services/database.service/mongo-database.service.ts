@@ -53,7 +53,7 @@ export class MongoDatabaseService implements DatabaseService {
     }
 
     public async list<T extends DatabaseObject>(type: new () => T, query?: any): Promise<T[]> {
-        return await this.collection(type).find(query).toArray();
+        return await this.collection(type).find(this.buildQuery(query)).toArray();
     }
 
     public async update<T extends DatabaseObject>(object: T): Promise<T> {
@@ -69,6 +69,15 @@ export class MongoDatabaseService implements DatabaseService {
     private collection<T>(x: new () => T) : Collection<any> {
         const collectionName = x.name ? x.name : x.constructor.name;
         return this.database.collection(collectionName.toLowerCase());
+    }
+
+    private buildQuery(query: any): any {
+        if(query && query.id) {
+            const q = Object.assign({_id: query.id}, query);
+            delete q.id;
+            return q;
+        }
+        return query;
     }
 
 }
