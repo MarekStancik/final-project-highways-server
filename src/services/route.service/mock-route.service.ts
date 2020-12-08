@@ -4,6 +4,7 @@ import { map, tap } from "rxjs/operators";
 import { Route, RouteStatus } from "../../models/route.model";
 import { RouteService } from "./route.service";
 import * as uuid from "uuid";
+import { remove } from "winston";
 
 
 
@@ -33,12 +34,23 @@ export class MockRouteService implements RouteService {
         ).subscribe(data => this.subject$.next(data));
     }
 
-    delete(id: string): void {
-        const index = this.arr.findIndex(r => r.id === id);
-        if (index > -1) {
-            this.arr.splice(index, 1);
+    update(route: Route): Route {
+        const idx = this.arr.findIndex(r => r.id === route.id);
+        if (~idx) {
+            this.arr[idx] = route;
+            this.subject$.next(this.arr);
         }
-        this.subject$.next(this.arr);
+        return ~idx ? this.arr[idx] : null;
+    }
+
+    delete(id: string): Route {
+        const index = this.arr.findIndex(r => r.id === id);
+        if (~index) {
+            const removed = this.arr.splice(index, 1)[0];
+            this.subject$.next(this.arr);
+            return removed;
+        }
+        return null;
     }
 
     create(route: Route): Route {

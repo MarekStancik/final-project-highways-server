@@ -19,6 +19,23 @@ export class RoutesApi {
         router.get("/routes", this.authenticationService.mwfRequireAuthentication(), this.mwList.bind(this));
         router.post("/routes", this.authenticationService.mwfRequireAuthentication(), this.mwCreate.bind(this));
         router.delete("/routes/:id", this.authenticationService.mwfRequireAuthentication(), this.mwDelete.bind(this));
+        router.put("/routes/:id",this.authenticationService.mwfRequireAuthentication(),this.mwUpdate.bind(this));
+    }
+
+    public async mwUpdate(req: Request, res: Response, next: NextFunction) {
+        try {
+            if (!req.params?.id) {
+                return ApiResponse.Error.BadRequest(next,"id was not provided");
+            }
+            if(!req.body) {
+                return ApiResponse.Error.BadRequest(next,"body was not provided");
+            }
+            const updatedObj = this.routeService.update(req.body);
+            return updatedObj ? ApiResponse.Success.Ok(req,next,updatedObj) : ApiResponse.Error.NotFound(next,`route with id ${req.params.id} does not exist`);
+        } catch (err) {
+            this.log.error(err);
+            return ApiResponse.Error.Conflict(next,err);
+        }
     }
 
     public async mwList(req: Request, res: Response, next: NextFunction) {
@@ -28,7 +45,7 @@ export class RoutesApi {
     public async mwDelete(req: Request, res: Response, next: NextFunction) {
         try {
             if (!req.params?.id) {
-                return ApiResponse.Error.BadRequest(next);
+                return ApiResponse.Error.BadRequest(next,"id was not provided");
             }
             this.routeService.delete(req.params.id);
             return ApiResponse.Success.Ok(req,next,{});
@@ -41,7 +58,7 @@ export class RoutesApi {
     public mwCreate(req: Request, res: Response, next: NextFunction) {
         try {
             if (!req.body) {
-                return ApiResponse.Error.BadRequest(next);
+                return ApiResponse.Error.BadRequest(next, "body was not provided");
             }
             return ApiResponse.Success.Created(req, next, this.routeService.create(req.body));
         } catch (err) {
