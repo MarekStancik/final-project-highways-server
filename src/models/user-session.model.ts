@@ -1,4 +1,5 @@
 import { DatabaseObject } from "./database-object.model";
+import { User } from "./user.model";
 
 export class UserSession extends DatabaseObject{
     user: UserSpec;
@@ -10,8 +11,10 @@ export class UserSession extends DatabaseObject{
     expiryDate: Date;
     createDate: Date;
     updateDate: Date;
+    permissions: any;
 }
 
 export class UserSpec {
-    id: string
+    id: string;
+    user: User;
 }

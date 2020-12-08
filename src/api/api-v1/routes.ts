@@ -9,17 +9,17 @@ export class RoutesApi {
     private log: LogService = LogService.instance;
 
     constructor(
-        private authenticationService: AuthenticationService,
+        private auth: AuthenticationService,
         private routeService: RouteService
     ) {
 
     }
 
     public install(router: Router): void {
-        router.get("/routes", this.authenticationService.mwfRequireAuthentication(), this.mwList.bind(this));
-        router.post("/routes", this.authenticationService.mwfRequireAuthentication(), this.mwCreate.bind(this));
-        router.delete("/routes/:id", this.authenticationService.mwfRequireAuthentication(), this.mwDelete.bind(this));
-        router.put("/routes/:id",this.authenticationService.mwfRequireAuthentication(),this.authenticationService.mwfRequireAuthorization("route","update"),this.mwUpdate.bind(this));
+        router.get("/routes", this.auth.mwfRequireAuthentication(), this.auth.mwfRequireAuthorization("route","read"), this.mwList.bind(this));
+        router.post("/routes", this.auth.mwfRequireAuthentication(), this.auth.mwfRequireAuthorization("route","create"), this.mwCreate.bind(this));
+        router.delete("/routes/:id", this.auth.mwfRequireAuthentication(), this.auth.mwfRequireAuthorization("route","delete"), this.mwDelete.bind(this));
+        router.put("/routes/:id",this.auth.mwfRequireAuthentication(),this.auth.mwfRequireAuthorization("route","update"),this.mwUpdate.bind(this));
     }
 
     public async mwUpdate(req: Request, res: Response, next: NextFunction) {

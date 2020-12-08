@@ -21,11 +21,11 @@ export class AuthenticationService {
     public async authenticate(username: string, password: string): Promise<UserSession> {
         const user = await this.authenticateUser(username, password);
         const session = await this.database.create(UserSession);
-        session.user = new UserSpec();
-        session.user.id = user.id;
+        session.user = user;
         session.token = uuid.v4();
         session.lifetime = 20000000;
         session.startDate = session.lastRequestDate = new Date();
+        session.permissions = Permissions[user.user.authorization];
         return await this.database.update(session);
     }
 
@@ -39,7 +39,8 @@ export class AuthenticationService {
             throw new AuthenticationError("User is disabled");
         }
         return {
-            id: user._id
+            id: user._id,
+            user
         };
     }
 
@@ -60,7 +61,9 @@ export class AuthenticationService {
                 await this.database.update(session);
 
                 req.session = session;
-                req.user = await this.database.get(User, { id: session.user.id });
+                const user = await this.database.get(User, { id: session.user.id });
+                req.user = user;
+                req.permissions = Permissions[user.authorization];
 
                 return next();
             } catch (error) {
@@ -81,7 +84,7 @@ export class AuthenticationService {
                 }
                 const session = await this.getSessionByToken(req.session.token);
                 const user = await this.database.get(User, {id: session.user.id});
-                if(!this.evaluatePermissions(resource,operation,user.authorization)){
+                if(this.evaluatePermissions(resource,operation,user.authorization)){
                     return next();
                 }
                 return ApiResponse.Error.PermissionDenied(next);
@@ -103,6 +106,6 @@ export class AuthenticationService {
     }
 
     private evaluatePermissions(resource: ResourceType,operation: OperationType, role: AuthorizationType): boolean {
-        return Permissions[role][resource]?.includes(operation);
+        return Permissions[role]?.[resource]?.includes(operation);
     }
 }

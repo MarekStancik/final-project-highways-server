@@ -46,15 +46,10 @@ export class AuthenticationApi {
     }
 
     private mwGetAuthenticationInfo(req: Request, res: Response, next: NextFunction): void {
+        console.log(req.permissions);
         return ApiResponse.Success.Ok(req, next, {
-           /* session: req.session.filter([
-                "token",
-                "_meta"
-            ], true),
-            user: req.user.filter([
-                "password",
-                "_meta"
-            ], true) */
+            user: req.user,
+            permissions: req.permissions
         });
     }
 
