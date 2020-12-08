@@ -18,10 +18,24 @@ export class RoutesApi {
     public install(router: Router): void {
         router.get("/routes", this.authenticationService.mwfRequireAuthentication(), this.mwList.bind(this));
         router.post("/routes", this.authenticationService.mwfRequireAuthentication(), this.mwCreate.bind(this));
+        router.delete("/routes/:id", this.authenticationService.mwfRequireAuthentication(), this.mwDelete.bind(this));
     }
 
     public async mwList(req: Request, res: Response, next: NextFunction) {
         return ApiResponse.Success.Ok(req, next, await this.routeService.list());
+    }
+
+    public async mwDelete(req: Request, res: Response, next: NextFunction) {
+        try {
+            if (!req.params?.id) {
+                return ApiResponse.Error.BadRequest(next);
+            }
+            this.routeService.delete(req.params.id);
+            return ApiResponse.Success.Ok(req,next,{});
+        } catch (err) {
+            this.log.error(err);
+            return ApiResponse.Error.Conflict(next,err);
+        }
     }
 
     public mwCreate(req: Request, res: Response, next: NextFunction) {

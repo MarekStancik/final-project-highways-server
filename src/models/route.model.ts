@@ -1,3 +1,5 @@
+export type RouteStatus = "empty" | "normal" | "full" | "jammed";
+
 export class Route {
     id: string;
     start: string;
@@ -5,5 +7,5 @@ export class Route {
     name: string;
     length :number;
     avgTime: number;
-    status: string;
+    status: RouteStatus;
 }
