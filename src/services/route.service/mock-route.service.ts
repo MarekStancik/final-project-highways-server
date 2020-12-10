@@ -4,9 +4,9 @@ import { map, tap } from "rxjs/operators";
 import { Route, RouteStatus } from "../../models/route.model";
 import { RouteService } from "./route.service";
 import * as uuid from "uuid";
-import { remove } from "winston";
+import { EventService } from "../event.service";
 
-
+const AVG_TIME_MAX = 1000;
 
 export class MockRouteService implements RouteService {
 
@@ -23,45 +23,50 @@ export class MockRouteService implements RouteService {
             { id: "009", start: "BB", end: "BA", name: "E64", length: 20, avgTime: 2000, status: "full" }
         ];
 
-    private subject$ = new BehaviorSubject<Route[]>(null);
+    private subject$ = new BehaviorSubject<Route[]>(this.arr);
 
-    constructor() {
-        const statusArr: RouteStatus[] = ["jammed","empty","full","normal"];
-        interval(5000).pipe(
-            map(num => this.arr),
-            tap(data => data.forEach(v => v.avgTime = Math.random() * 1000)),
-            tap(data => data.forEach(v => v.status = statusArr[Math.round(Math.random() * 3)]))
-        ).subscribe(data => this.subject$.next(data));
+    constructor(private eventBus: EventService) {        
+        this.arr.forEach(r => this.decorateRoute(r));
+        interval(2500).pipe(
+            map(num => this.arr[Math.round(Math.random() * (this.arr.length - 1))]),
+            tap(obj => this.decorateRoute(obj)),
+        ).subscribe(obj => this.eventBus.emit("update","route",obj));
     }
 
-    update(route: Route): Route {
+    public update(route: Route): Route {
         const idx = this.arr.findIndex(r => r.id === route.id);
         if (~idx) {
-            this.arr[idx] = route;
-            this.subject$.next(this.arr);
+            this.arr[idx] = this.decorateRoute(route);
+            this.eventBus.emit("update","route",route);
         }
         return ~idx ? this.arr[idx] : null;
     }
 
-    delete(id: string): Route {
+    public delete(id: string): Route {
         const index = this.arr.findIndex(r => r.id === id);
         if (~index) {
             const removed = this.arr.splice(index, 1)[0];
-            this.subject$.next(this.arr);
+            this.eventBus.emit("delete","route",removed);
             return removed;
         }
         return null;
     }
 
-    create(route: Route): Route {
+    public create(route: Route): Route {
         route.id = uuid.v4();
-        this.arr.push(route);
-        this.subject$.next(this.arr);
+        this.arr.push(this.decorateRoute(route));
+        this.eventBus.emit("create","route",route);
         return route;
     }
 
-    list(): BehaviorSubject<Route[]> {
-        return this.subject$;
+    public list(): Route[] {
+        return this.subject$.value;
     }
 
+    private decorateRoute(route: Route) : Route {
+        const statusArr: RouteStatus[] = ["empty","normal","full","jammed"];
+        route.avgTime = Math.random() * AVG_TIME_MAX;
+        route.status = statusArr[Math.floor(route.avgTime/(AVG_TIME_MAX/4))];
+        return route;
+    }
 }

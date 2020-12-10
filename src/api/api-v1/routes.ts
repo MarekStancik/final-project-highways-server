@@ -38,8 +38,9 @@ export class RoutesApi {
         }
     }
 
-    public async mwList(req: Request, res: Response, next: NextFunction) {
-        return ApiResponse.Success.Ok(req, next, await this.routeService.list());
+    public mwList(req: Request, res: Response, next: NextFunction) {
+        const list = this.routeService.list();
+        return ApiResponse.Success.Ok(req, next, list);
     }
 
     public async mwDelete(req: Request, res: Response, next: NextFunction) {
