@@ -60,7 +60,6 @@ export class LogService {
     }
 
     public log(level: string, msg: string | Error, ...meta: any[]): this {
-        msg = "server " + msg;
         this.logger.log(level, msg as any, ...meta);
         return this;
     }

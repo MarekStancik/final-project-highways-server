@@ -5,6 +5,7 @@ import { first } from "rxjs/operators";
 import { ConfigService } from "../config.service";
 import { LogService } from "../log.service";
 import { DatabaseObject } from "../../models/database-object.model";
+import { type } from "os";
 
 export class MongoDatabaseService implements DatabaseService {
 
@@ -38,8 +39,12 @@ export class MongoDatabaseService implements DatabaseService {
         return this.client.db("mydatabase");
     }
 
-    public async create<T extends DatabaseObject>(type: new () => T): Promise<T> {
-        const object: T = new type();
+    public create<T extends DatabaseObject>(object: T): Promise<T>;
+    public create<T extends DatabaseObject>(type: (new () => T)): Promise<T>;
+    public async create<T extends DatabaseObject>(type?: new () => T,object?: T): Promise<T> {
+        if (!object) {
+            object = new type();
+        }
         await this.collection(type).insertOne(object);
         return object;
     }
@@ -61,8 +66,12 @@ export class MongoDatabaseService implements DatabaseService {
         return object;
     }
     
-    public async delete<T extends DatabaseObject>(object: T): Promise<void> {
-        await this.collection(object).deleteOne({ _id: object._id })
+    public delete<T extends DatabaseObject>(type: (new () => T),id: string): Promise<T>;
+    public delete<T extends DatabaseObject>(object: T): Promise<T>;
+    public async delete<T extends DatabaseObject>(typeOrObject: T | (new () => T),id?: string): Promise<void>{
+        const _id = id ? id : (typeOrObject as T)._id;
+        await this.collection(typeOrObject).deleteOne({ _id });
+
     }
 
     private collection<T>(x: T) : Collection<any>;

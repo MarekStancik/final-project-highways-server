@@ -13,6 +13,8 @@ import { DatabaseService } from "./database.service/database.service";
 import { MockRouteService } from "./route.service/mock-route.service";
 import { RouteService } from "./route.service/route.service";
 import { EventService } from "./event.service";
+import { ObjectService } from "./object.service";
+import { User } from "../models";
 
 
 export class ApiService {
@@ -25,7 +27,8 @@ export class ApiService {
         private db: DatabaseService, 
         private auth: AuthenticationService,
         private routes: RouteService,
-        private events: EventService
+        private events: EventService,
+        private users: ObjectService<User>
     ) {
         this.app = express();
     }
@@ -45,7 +48,7 @@ export class ApiService {
         this.app.use(expressBodyParser.json());
 
         // Install API
-        this.app.use("/v1", new ApiV1(this.auth,this.db,this.routes).router);
+        this.app.use("/v1", new ApiV1(this.auth,this.db,this.routes,this.users).router);
 
         // Install WebSocket API Version
         this.app.use("/ws/v1", new WsApiV1(this.auth,this.events).router);
