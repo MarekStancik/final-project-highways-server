@@ -56,7 +56,7 @@ export class AuthenticationApi {
         try {
             const session = req.session as UserSession;
             session.expiryDate = new Date();
-            this.database.update(session);
+            this.database.update("usersession",session);
             return ApiResponse.Success.Ok(req, next, {});
         } catch (error) {
             this.log.error(error);

@@ -1,3 +1,5 @@
+export type EntityType = "user" | "route" | "usersession";
+
 export class DatabaseObject {
-    _id: string;
+    id: string;
 }

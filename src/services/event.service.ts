@@ -1,6 +1,6 @@
 import { BehaviorSubject, Observable } from "rxjs";
-import { MessageBaseDto } from "../api/ws-api-v1/dto/common";
-import { Event, ActionType, EntityType } from "../models/event.model";
+import { EntityType } from "../models/database-object.model";
+import { ActionType, Event } from "../models/event.model";
 
 export class EventService {
 

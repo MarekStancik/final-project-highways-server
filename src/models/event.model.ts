@@ -1,6 +1,6 @@
-export type ActionType = "update" | "create" | "delete";
+import { EntityType } from "./database-object.model";
 
-export type EntityType = "user" | "route";
+export type ActionType = "update" | "create" | "delete";
 
 export interface Event {
     action: ActionType;

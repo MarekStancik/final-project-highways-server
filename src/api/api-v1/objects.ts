@@ -1,6 +1,5 @@
 import { NextFunction, Request, Response, Router } from "express";
 import { DatabaseObject } from "../../models/database-object.model";
-import { EntityType } from "../../models/event.model";
 import { AuthenticationService } from "../../services/authentication.service/authentication.service";
 import { LogService } from "../../services/log.service";
 import { ObjectService } from "../../services/object.service";
@@ -33,7 +32,7 @@ export class ObjectApi<T extends DatabaseObject> {
             if(!req.body) {
                 return ApiResponse.Error.BadRequest(next,"body was not provided");
             }
-            const updatedObj = this.objectService.update(req.body);
+            const updatedObj = await this.objectService.update(req.body);
             return updatedObj ? ApiResponse.Success.Ok(req,next,updatedObj) : ApiResponse.Error.NotFound(next,`object with id ${req.params.id} does not exist`);
         } catch (err) {
             this.log.error(err);
@@ -43,7 +42,6 @@ export class ObjectApi<T extends DatabaseObject> {
 
     public async mwList(req: Request, res: Response, next: NextFunction) {
         const list = await this.objectService.list();
-        console.log(list);
         return ApiResponse.Success.Ok(req, next, list);
     }
 

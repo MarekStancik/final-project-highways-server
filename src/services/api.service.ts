@@ -15,6 +15,7 @@ import { RouteService } from "./route.service/route.service";
 import { EventService } from "./event.service";
 import { ObjectService } from "./object.service";
 import { User } from "../models";
+import { UserService } from "./user.service";
 
 
 export class ApiService {
@@ -28,7 +29,7 @@ export class ApiService {
         private auth: AuthenticationService,
         private routes: RouteService,
         private events: EventService,
-        private users: ObjectService<User>
+        private users: UserService
     ) {
         this.app = express();
     }

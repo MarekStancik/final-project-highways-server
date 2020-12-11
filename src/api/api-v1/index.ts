@@ -4,6 +4,7 @@ import { AuthenticationService } from "../../services/authentication.service/aut
 import { DatabaseService } from "../../services/database.service/database.service";
 import { ObjectService } from "../../services/object.service";
 import { RouteService } from "../../services/route.service/route.service";
+import { UserService } from "../../services/user.service";
 import { ApiResponse } from "../utils/api-response";
 import { AuthenticationApi } from "./authentication";
 import { ObjectApi } from "./objects";
@@ -15,7 +16,7 @@ export class ApiV1 {
         private auth: AuthenticationService,
         private db: DatabaseService,
         private routes: RouteService,
-        private users: ObjectService<User>
+        private users: UserService
     ) { }
 
     public get router(): Router {

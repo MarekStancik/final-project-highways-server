@@ -1,11 +1,10 @@
-import { DatabaseService } from "./database.service";
-import { Collection, Cursor, Db, MongoClient } from "mongodb";
+import { Collection, Db, MongoClient, ObjectId } from "mongodb";
 import { timer } from "rxjs/internal/observable/timer";
 import { first } from "rxjs/operators";
+import { DatabaseObject, EntityType } from "../../models/database-object.model";
 import { ConfigService } from "../config.service";
 import { LogService } from "../log.service";
-import { DatabaseObject } from "../../models/database-object.model";
-import { type } from "os";
+import { DatabaseService } from "./database.service";
 
 export class MongoDatabaseService implements DatabaseService {
 
@@ -39,52 +38,56 @@ export class MongoDatabaseService implements DatabaseService {
         return this.client.db("mydatabase");
     }
 
-    public create<T extends DatabaseObject>(object: T): Promise<T>;
-    public create<T extends DatabaseObject>(type: (new () => T)): Promise<T>;
-    public async create<T extends DatabaseObject>(type?: new () => T,object?: T): Promise<T> {
-        if (!object) {
-            object = new type();
-        }
+    public async create<T extends DatabaseObject>(type: EntityType,object: T): Promise<T> {
         await this.collection(type).insertOne(object);
-        return object;
+        return this.switchId(object);
     }
 
-    public async get<T extends DatabaseObject>(type: new () => T, query?: any): Promise<T> {
+    public async get<T extends DatabaseObject>(type: EntityType, query?: any): Promise<T> {
         const list = await this.list(type,query);
         if (list.length > 1) {
             throw Error("bad query");
         }
-        return list[0] || null;
+        return (list[0] || null) as T;
     }
 
-    public async list<T extends DatabaseObject>(type: new () => T, query?: any): Promise<T[]> {
-        return await this.collection(type).find(this.buildQuery(query)).toArray();
+    public async list<T extends DatabaseObject>(type: EntityType, query?: any): Promise<T[]> {
+        const list = await this.collection(type).find(this.buildQuery(query)).toArray();
+        list.forEach(obj => this.switchId(obj));
+        return list;
     }
 
-    public async update<T extends DatabaseObject>(object: T): Promise<T> {
-        await this.collection(object).updateOne({ _id: object._id},{ $set: object});
+    public async update<T extends DatabaseObject>(type: EntityType,object: T): Promise<T> {
+        await this.collection(type).updateOne(this.buildQuery({ id: object.id}),{ $set: object});
         return object;
     }
     
-    public delete<T extends DatabaseObject>(type: (new () => T),id: string): Promise<T>;
-    public delete<T extends DatabaseObject>(object: T): Promise<T>;
-    public async delete<T extends DatabaseObject>(typeOrObject: T | (new () => T),id?: string): Promise<void>{
-        const _id = id ? id : (typeOrObject as T)._id;
-        await this.collection(typeOrObject).deleteOne({ _id });
+    public delete<T extends DatabaseObject>(type: EntityType,id: string): Promise<T>;
+    public delete<T extends DatabaseObject>(type: EntityType,object: T): Promise<T>;
+    public async delete<T extends DatabaseObject>(type: EntityType,idOrObj?: string | T): Promise<void>{
+        let id = typeof idOrObj === "string" ? idOrObj : (idOrObj as T).id;
+        await this.collection(type).deleteOne(this.buildQuery({ id }));
 
     }
 
-    private collection<T>(x: T) : Collection<any>;
-    private collection<T>(x: new () => T) : Collection<any> {
-        const collectionName = x.name ? x.name : x.constructor.name;
-        return this.database.collection(collectionName.toLowerCase());
+    private collection(x: EntityType) : Collection<any> {
+        return this.database.collection(x);
+    }
+
+    private switchId(obj: any): any {
+        obj.id = obj._id;
+        delete obj._id;
+        return obj;
     }
 
     private buildQuery(query: any): any {
         if(query && query.id) {
-            const q = Object.assign({_id: query.id}, query);
+            const q = Object.assign({_id: new ObjectId(query.id)}, query);
             delete q.id;
             return q;
+        }
+        if(query?._id) {
+            query._id = new ObjectId(query._id);
         }
         return query;
     }

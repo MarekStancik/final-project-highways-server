@@ -166,7 +166,7 @@ export class ClientHandler {
                     };
                     await this.send(response);
                     this.internalState$.next("ready");
-                    this.log.info("successfully authenticated using pre-existing session %s", session._id);
+                    this.log.info("successfully authenticated using pre-existing session %s", session.id);
                 } else {
                     return this.close(new WsApiError("Authentication failed", ErrorCodes.AuthenticationFailed, request.sequenceId));
                 }
