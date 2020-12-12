@@ -2,6 +2,7 @@ import { NextFunction, Request, Response, Router } from "express";
 import { User } from "../../models";
 import { AuthenticationService } from "../../services/authentication.service/authentication.service";
 import { DatabaseService } from "../../services/database.service/database.service";
+import { EventService } from "../../services/event.service";
 import { ObjectService } from "../../services/object.service";
 import { RouteService } from "../../services/route.service/route.service";
 import { UserService } from "../../services/user.service";
@@ -15,6 +16,7 @@ export class ApiV1 {
     constructor(
         private auth: AuthenticationService,
         private db: DatabaseService,
+        private events: EventService,
         private routes: RouteService,
         private users: UserService
     ) { }
@@ -37,6 +39,12 @@ export class ApiV1 {
 
         /* Users API */
         new ObjectApi(this.auth,this.users).install(router,"users");
+
+        /* Node API */
+        new ObjectApi(this.auth,new ObjectService(this.db,this.events,"node")).install(router,"nodes");
+        
+        /* Device API */
+        new ObjectApi(this.auth,new ObjectService(this.db,this.events,"device")).install(router,"devices");
 
         return router;
     }

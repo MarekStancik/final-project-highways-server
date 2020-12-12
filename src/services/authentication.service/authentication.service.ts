@@ -6,7 +6,7 @@ import { UserSession, UserSpec, User } from "../../models";
 import { LogService } from "../log.service";
 import { AuthenticationError } from "./authentication.error";
 import { DatabaseService } from "../database.service/database.service";
-import { AuthorizationType, OperationType, Permissions } from "../../models/permission.model";
+import { AuthorizationType, OperationType, Permissions, ResourceType } from "../../models/permission.model";
 import { EntityType } from "../../models/database-object.model";
 
 export class AuthenticationService {
@@ -25,13 +25,13 @@ export class AuthenticationService {
 
     public async authenticate(username: string, password: string): Promise<UserSession> {
         const user = await this.authenticateUser(username, password);
-        const session = await this.database.create("usersession",{} as UserSession);
+        const session = await this.database.create("session",{} as UserSession);
         session.user = user;
         session.token = uuid.v4();
         session.lifetime = 20000000;
         session.startDate = session.lastRequestDate = new Date();
         session.permissions = Permissions[user.user.authorization];
-        return await this.database.update("usersession",session);
+        return await this.database.update("session",session);
     }
 
     private async authenticateUser(username: string, password: string): Promise<UserSpec> {
@@ -63,7 +63,7 @@ export class AuthenticationService {
 
                 const session = await this.getSessionByToken(sessionToken);
                 session.lastRequestDate = new Date();
-                await this.database.update("usersession",session);
+                await this.database.update("session",session);
 
                 req.session = session;
                 const user = await this.database.get<User>("user", { id: session.user.id });
@@ -81,7 +81,7 @@ export class AuthenticationService {
         };
     }
 
-    public mwfRequireAuthorization(resource: EntityType, operation: OperationType) {
+    public mwfRequireAuthorization(resource: ResourceType, operation: OperationType) {
         return async (req: Request, res: Response, next: NextFunction): Promise<void> => {
             try {
                 if (!req.session) {
@@ -100,7 +100,7 @@ export class AuthenticationService {
     }
 
     public async getSessionByToken(token: string): Promise<UserSession> {
-        const session = await this.database.get<UserSession>("usersession", { token });
+        const session = await this.database.get<UserSession>("session", { token });
         if (!session) {
             throw new AuthenticationError("Session not found", "SESSION_NOT_FOUND");
         }
@@ -110,7 +110,7 @@ export class AuthenticationService {
         return session;
     }
 
-    private evaluatePermissions(resource: EntityType, operation: OperationType, role: AuthorizationType): boolean {
+    private evaluatePermissions(resource: ResourceType, operation: OperationType, role: AuthorizationType): boolean {
         return Permissions[role]?.[resource]?.includes(operation);
     }
 }

@@ -4,20 +4,25 @@ export type AuthorizationType = "admin" | "user" | "manager";
 
 export type OperationType = "create" | "read" | "update" | "delete";
 
-export const Permissions: Record<AuthorizationType, Record<EntityType, OperationType[]>> = {
+export type ResourceType = Exclude<EntityType, "session">;
+
+export const Permissions: Record<AuthorizationType, Record<ResourceType, OperationType[]>> = {
     user:{
         route: ["read"],
         user: [],
-        usersession: []
+        node: [],
+        device: []
     },
     manager:{
         route: ["read","update","delete","create"],
         user: ["read"],
-        usersession: []
+        node: [],
+        device: []
     },
     admin:{
         route: ["create","delete","read","update"],
         user: ["create","delete","read","update"],
-        usersession: []
+        node: ["create","delete","read","update"],
+        device: ["create","delete","read","update"]
     }
 }

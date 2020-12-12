@@ -1,5 +1,6 @@
 import { NextFunction, Request, Response, Router } from "express";
 import { DatabaseObject } from "../../models/database-object.model";
+import { ResourceType } from "../../models/permission.model";
 import { AuthenticationService } from "../../services/authentication.service/authentication.service";
 import { LogService } from "../../services/log.service";
 import { ObjectService } from "../../services/object.service";
@@ -13,11 +14,13 @@ export class ObjectApi<T extends DatabaseObject> {
         private auth: AuthenticationService,
         private objectService: ObjectService<T>
     ) {
-
+        if (this.objectService.entityType === "session") {
+            throw new Error("Can't initiate objectApi for session entityType")
+        }
     }
 
     public install(router: Router,path: string): void {
-        const entityType = this.objectService.entityType;
+        const entityType = this.objectService.entityType as ResourceType;
         router.get(`/${path}`, this.auth.mwfRequireAuthentication(), this.auth.mwfRequireAuthorization(entityType,"read"), this.mwList.bind(this));
         router.post(`/${path}`, this.auth.mwfRequireAuthentication(), this.auth.mwfRequireAuthorization(entityType,"create"), this.mwCreate.bind(this));
         router.delete(`/${path}/:id`, this.auth.mwfRequireAuthentication(), this.auth.mwfRequireAuthorization(entityType,"delete"), this.mwDelete.bind(this));
