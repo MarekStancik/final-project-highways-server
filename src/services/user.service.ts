@@ -1,9 +1,8 @@
 import { User } from "../models";
+import { AuthenticationService } from "./authentication.service/authentication.service";
 import { DatabaseService } from "./database.service/database.service";
 import { EventService } from "./event.service";
 import { ObjectService } from "./object.service";
-import crypto from "crypto"
-import { AuthenticationService } from "./authentication.service/authentication.service";
 
 export class UserService extends ObjectService<User>{
     constructor(db: DatabaseService, events: EventService) {
@@ -31,10 +30,13 @@ export class UserService extends ObjectService<User>{
             }
             obj.password = original.password;
         }
-        return super.update(obj);
+        const updated = await this.db.update(this.entityType,obj);
+        this.eventBus.emit("update",this.entityType,this.stripPassword(obj));
+        return updated;
     }
 
-    private stripPassword(user: User): void{
-        return user.password = null;
+    private stripPassword(user: User): User{
+        user.password = null;
+        return user;
     }
 }

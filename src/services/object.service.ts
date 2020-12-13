@@ -12,8 +12,8 @@ import { EventService } from "./event.service";
 export class ObjectService<T extends DatabaseObject> {
     
     constructor(
-        private db: DatabaseService, 
-        private eventBus: EventService, 
+        protected db: DatabaseService, 
+        protected eventBus: EventService, 
         public readonly entityType: EntityType) {
 
     }
