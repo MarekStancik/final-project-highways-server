@@ -5,6 +5,7 @@ import { ResourceType } from "../../models/permission.model";
 import { AuthenticationService } from "../../services/authentication.service/authentication.service";
 import { LogService } from "../../services/log.service";
 import { ObjectService } from "../../services/object.service";
+import { RouteService } from "../../services/route.service/route.service";
 import { ApiResponse } from "../utils/api-response";
 
 export class ObjectApi<T extends DatabaseObject> {
@@ -13,7 +14,7 @@ export class ObjectApi<T extends DatabaseObject> {
     @Inject private auth: AuthenticationService;
 
     constructor(
-        private objectService: ObjectService<T>
+        private objectService: ObjectService<T> | RouteService
     ) {
         if (this.objectService.entityType === "session") {
             throw new Error("Can't initiate objectApi for session entityType")
@@ -56,7 +57,8 @@ export class ObjectApi<T extends DatabaseObject> {
                 return ApiResponse.Error.BadRequest(next,"body was not provided");
             }
             const updatedObj = await this.objectService.update(req.body);
-            return updatedObj ? ApiResponse.Success.Ok(req,next,updatedObj) : ApiResponse.Error.NotFound(next,`object with id ${req.params.id} does not exist`);
+            return updatedObj ? ApiResponse.Success.Ok(req,next,updatedObj) : 
+                ApiResponse.Error.NotFound(next,`object with id ${req.params.id} does not exist`);
         } catch (err) {
             this.log.error(err);
             return ApiResponse.Error.Conflict(next,err);

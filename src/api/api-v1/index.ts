@@ -1,11 +1,11 @@
 import { NextFunction, Request, Response, Router } from "express";
 import { Container } from "typescript-ioc";
 import { ObjectService } from "../../services/object.service";
+import { RouteService } from "../../services/route.service/route.service";
 import { UserService } from "../../services/user.service";
 import { ApiResponse } from "../utils/api-response";
 import { AuthenticationApi } from "./authentication";
 import { ObjectApi } from "./objects";
-import { RoutesApi } from "./routes";
 
 export class ApiV1 {
 
@@ -23,7 +23,7 @@ export class ApiV1 {
         new AuthenticationApi().install(router);
 
         /* Routes API */
-        new RoutesApi().install(router);
+        new ObjectApi(Container.get(RouteService)).install(router,"routes");
 
         /* Users API */
         new ObjectApi(Container.get(UserService)).install(router,"users");
