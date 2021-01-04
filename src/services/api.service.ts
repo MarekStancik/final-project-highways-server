@@ -1,20 +1,16 @@
-import express from "express";
-import expressWs from "express-ws";
 import expressBodyParser from "body-parser";
-import { Express, NextFunction, Request, Response } from "express";
-import { LogService } from "./log.service";
+import express, { Express, NextFunction, Request, Response } from "express";
+import expressWs from "express-ws";
 import { ApiV1 } from "../api/api-v1";
-import { WsApiV1 } from "../api/ws-api-v1";
 import { ApiResponse } from "../api/utils/api-response";
 import { ApiError } from "../api/utils/api.error";
+import { WsApiV1 } from "../api/ws-api-v1";
 import { AuthenticationService } from "./authentication.service/authentication.service";
 import { ConfigService } from "./config.service";
 import { DatabaseService } from "./database.service/database.service";
-import { MockRouteService } from "./route.service/mock-route.service";
-import { RouteService } from "./route.service/route.service";
 import { EventService } from "./event.service";
-import { ObjectService } from "./object.service";
-import { User } from "../models";
+import { LogService } from "./log.service";
+import { RouteService } from "./route.service/route.service";
 import { UserService } from "./user.service";
 
 

@@ -1,6 +1,6 @@
 import { EntityType } from "./database-object.model";
 
-export type AuthorizationType = "admin" | "user" | "manager";
+export type AuthorizationType = "admin" | "user" | "manager" | "techie";
 
 export type OperationType = "create" | "read" | "update" | "delete";
 
@@ -14,14 +14,20 @@ export const Permissions: Record<AuthorizationType, Record<ResourceType, Operati
         device: []
     },
     manager:{
-        route: ["read","update","delete","create"],
-        user: ["read"],
-        node: [],
-        device: []
+        route: ["read"],
+        user: ["read","update","create","delete"],
+        node: ["read"],
+        device: ["read"]
     },
     admin:{
         route: ["create","delete","read","update"],
         user: ["create","delete","read","update"],
+        node: ["create","delete","read","update"],
+        device: ["create","delete","read","update"]
+    },
+    techie:{
+        route: ["create","delete","read","update"],
+        user: [],
         node: ["create","delete","read","update"],
         device: ["create","delete","read","update"]
     }

@@ -1,10 +1,3 @@
-// export interface IObjectService<T> {
-//     list(): T[];
-//     create(obj: T): T;
-//     delete(id: string): T;
-//     update(obj: T): T;
-// }
-
 import { DatabaseObject, EntityType } from "../models/database-object.model";
 import { DatabaseService } from "./database.service/database.service";
 import { EventService } from "./event.service";

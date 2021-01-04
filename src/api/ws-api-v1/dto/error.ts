@@ -7,6 +7,5 @@ export class WsApiError extends Error {
         super(message);
         this.code = code || null;
         this.sequenceId = sequenceId || null;
-        Object.setPrototypeOf(this, WsApiError.prototype);
     }
 }

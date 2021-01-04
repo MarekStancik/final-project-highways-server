@@ -1,16 +1,14 @@
 import { Request, Router } from "express";
-import { Observable } from "rxjs";
-import { BehaviorSubject, interval, Subject, timer } from "rxjs";
-import { takeUntil, filter, take, tap, map, timeout } from "rxjs/operators";
-import { AuthenticationService } from "../../services/authentication.service/authentication.service";
-import { LogService } from "../../services/log.service";
-import { RouteService } from "../../services/route.service/route.service";
+import { BehaviorSubject, interval, Observable, Subject, timer } from "rxjs";
+import { filter, take, takeUntil, tap, timeout } from "rxjs/operators";
 import * as WebSocket from "ws";
-import { Authentication, Common, ErrorCodes, Message, MessageStub } from "./dto";
-import { AuthenticationError } from "../../services/authentication.service/authentication.error";
-import { WsApiError } from "./dto/error";
 import { User, UserSession } from "../../models";
+import { AuthenticationError } from "../../services/authentication.service/authentication.error";
+import { AuthenticationService } from "../../services/authentication.service/authentication.service";
 import { EventService } from "../../services/event.service";
+import { LogService } from "../../services/log.service";
+import { Authentication, Common, ErrorCodes, Message, MessageStub } from "./dto";
+import { WsApiError } from "./dto/error";
 import { EventMessage } from "./dto/event-message";
 
 const AUTHENTICATION_TIMEOUT = 5000;
@@ -25,8 +23,6 @@ export class ClientHandler {
 
     private log = LogService.instance;
     private ws: WebSocket;
-    private remoteAddress: string;
-    private remotePort: number;
     private lastActivity: Date;
     private internalState$: BehaviorSubject<ClientState> = new BehaviorSubject("pending" as ClientState);
     private internalReceive$: Subject<Message> = new Subject();
@@ -48,8 +44,6 @@ export class ClientHandler {
     
     constructor(ws: WebSocket, req: Request, private authentication: AuthenticationService) {
         this.ws = ws;
-        this.remoteAddress = req.connection.remoteAddress;
-        this.remotePort = req.connection.remotePort;
         this.lastActivity = new Date();
 
         /* process incoming messages */
@@ -121,17 +115,7 @@ export class ClientHandler {
      *
      * @param message message to be sent to client
      */
-    public async send<T extends Message>(message: MessageStub<T>): Promise<void>;
-
-    /**
-     * Sends a message to remote client and waits for response for `timeout` milliseconds.
-     *
-     * @param message message to be sent to client
-     * @param responseTimeout time (in milliseconds) to wait for remote to respond to this message
-     */
-    public async send<T extends Message, R extends Message>(message: MessageStub<T>, responseTimeout: number): Promise<R>;
-
-    public async send<T extends Message, R extends Message>(message: MessageStub<T>, responseTimeout?: number): Promise<void | R> {
+    public async send<T extends Message>(message: MessageStub<T>): Promise<void>{
         if (this.ws.readyState !== WebSocket.OPEN) {
             throw new WsApiError("Cannot transmit message on closed socket");
         }
@@ -140,16 +124,6 @@ export class ClientHandler {
         }
         const serialized = JSON.stringify(message);
         this.ws.send(serialized);
-
-        if (responseTimeout) {
-            const promise = this.internalReceive$.pipe(
-                takeUntil(this.close$),
-                timeout(responseTimeout),
-                filter(rxMessage => rxMessage.sequenceId === message.sequenceId),
-                take(1)
-            ).toPromise();
-            return (await promise) as R;
-        }
     }
 
     private async handleAuthenticationRequest(request: Authentication.RequestDto): Promise<void> {
@@ -233,9 +207,6 @@ export class WsApiV1 {
             const handler = new ClientHandler(ws,req,this.auth);
             handler.close$.pipe(take(1)).subscribe(() => this.handlers.splice(this.handlers.indexOf(handler),1))
             this.handlers.push(handler);
-            // const obs = this.routeService.list().subscribe(data => ws.send(JSON.stringify(data)));
-            // ws.onclose = e => obs.unsubscribe();
-            // ws.onerror = e => this.log.debug("Websocket Failed", e);
         });
 
         return router;
