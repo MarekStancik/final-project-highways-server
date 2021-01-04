@@ -1,13 +1,17 @@
 import fs from "fs";
+import { Container, OnlyInstantiableByContainer, Singleton } from "typescript-ioc";
 import YAML from "yaml";
 import { Config } from "../models/config.model";
 import { LogService } from "./log.service";
 
+@Singleton
+@OnlyInstantiableByContainer
 export class ConfigService {
     public data: Config;
 
-    constructor(filename: string) {
-        const log = LogService.instance
+    constructor() {
+        const filename = "./config.yaml";
+        const log = Container.get(LogService)
         try {
             const contents =  fs.readFileSync(filename);
             this.data = YAML.parse(contents.toString());

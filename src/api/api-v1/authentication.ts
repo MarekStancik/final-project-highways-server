@@ -1,4 +1,5 @@
 import { NextFunction, Request, Response, Router } from "express";
+import { Inject } from "typescript-ioc";
 import { UserSession } from "../../models";
 import { AuthenticationError } from "../../services/authentication.service/authentication.error";
 import { AuthenticationService } from "../../services/authentication.service/authentication.service";
@@ -8,14 +9,9 @@ import { ApiResponse } from "../utils/api-response";
 
 export class AuthenticationApi {
 
-    private log: LogService = LogService.instance;
-
-    constructor(
-        private authenticationService: AuthenticationService,
-        private database: DatabaseService
-    ) {
-
-    }
+    @Inject private log: LogService;
+    @Inject private authenticationService: AuthenticationService;
+    @Inject private database: DatabaseService;
 
     public install(router: Router): void {
         router.post("/authentication", this.mwAuthenticate.bind(this));

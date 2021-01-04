@@ -4,10 +4,15 @@ import { Route, RouteStatus } from "../../models/route.model";
 import { RouteService } from "./route.service";
 import * as uuid from "uuid";
 import { EventService } from "../event.service";
+import { Inject, OnlyInstantiableByContainer, Singleton } from "typescript-ioc";
 
 const AVG_TIME_MAX = 1000;
 
-export class MockRouteService implements RouteService {
+@Singleton
+@OnlyInstantiableByContainer
+export class MockRouteService extends RouteService {
+
+    @Inject private eventBus: EventService
 
     private arr: Route[] =
         [
@@ -22,7 +27,8 @@ export class MockRouteService implements RouteService {
             { id: "009", start: "BB", end: "BA", name: "E64", length: 20, avgTime: 2000, status: "full" }
         ];
 
-    constructor(private eventBus: EventService) {        
+    constructor() {     
+        super()   
         this.arr.forEach(r => this.decorateRoute(r));
         interval(2500).pipe(
             map(num => this.arr[Math.round(Math.random() * (this.arr.length - 1))]),

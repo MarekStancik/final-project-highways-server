@@ -1,38 +1,29 @@
+import { Container } from "typescript-ioc";
 import { ApiService } from "./services/api.service";
-import { AuthenticationService } from "./services/authentication.service/authentication.service";
-import { ConfigService } from "./services/config.service";
+import { DatabaseService } from "./services/database.service/database.service";
 import { MongoDatabaseService } from "./services/database.service/mongo-database.service";
-import { EventService } from "./services/event.service";
 import { LogService } from "./services/log.service";
 import { MockRouteService } from "./services/route.service/mock-route.service";
-import { UserService } from "./services/user.service";
+import { RouteService } from "./services/route.service/route.service";
 
 export class ServerLauncher {
 
-    private log: LogService;
-    
-    constructor(){
-        this.log = LogService.instance
-    }
-
     public async run() : Promise<void> {
+        const log = Container.get(LogService)
         try {
-            this.log.info("starting server");
+            log.info("starting server");
 
-            const configService = new ConfigService("./config.yaml");
-            const dbService = new MongoDatabaseService(configService);
-            const authService = new AuthenticationService(dbService);
-            const eventService = new EventService();
-            const routeService = new MockRouteService(eventService);
-            const userService = new UserService(dbService,eventService);
-            const apiService = new ApiService(configService,dbService,authService,routeService,eventService,userService);
+            // Setting up interfaces
+            Container.bind(DatabaseService).to(MongoDatabaseService);
+            Container.bind(RouteService).to(MockRouteService);
 
-            await dbService.initialize();
-            apiService.initialize();
+            //Initializing Services
+            await Container.get(MongoDatabaseService).initialize();
+            Container.get(ApiService).initialize();
 
-            this.log.info("server bootstrap finished");
+            log.info("server bootstrap finished");
         } catch (error) {
-            this.log.error("server startup failed: " + (error.message || "unknown error occurred while initializing server"));
+            log.error("server startup failed: " + (error.message || "unknown error occurred while initializing server"));
             console.error(error);
             process.exit(1);
         }    

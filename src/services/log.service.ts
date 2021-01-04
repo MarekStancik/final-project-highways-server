@@ -1,17 +1,11 @@
+import { Singleton, OnlyInstantiableByContainer } from "typescript-ioc";
 import * as winston from "winston";
 
+@Singleton
+@OnlyInstantiableByContainer
 export class LogService {
 
     private logger: winston.Logger;
-
-    private static _instance: LogService;
-
-    public static get instance() : LogService {
-        if(!LogService._instance) {
-            LogService._instance = new LogService();
-        }
-        return LogService._instance;
-    }
 
     private constructor() {
         const defaultTextFormat = winston.format.combine(

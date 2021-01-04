@@ -1,6 +1,7 @@
 import { Request, Router } from "express";
 import { BehaviorSubject, interval, Observable, Subject, timer } from "rxjs";
-import { filter, take, takeUntil, tap, timeout } from "rxjs/operators";
+import { filter, take, takeUntil, tap } from "rxjs/operators";
+import { Container, Inject } from "typescript-ioc";
 import * as WebSocket from "ws";
 import { User, UserSession } from "../../models";
 import { AuthenticationError } from "../../services/authentication.service/authentication.error";
@@ -21,7 +22,9 @@ export class ClientHandler {
     public session: UserSession;
     public user: User;
 
-    private log = LogService.instance;
+    @Inject private authentication: AuthenticationService
+    @Inject private log: LogService;
+
     private ws: WebSocket;
     private lastActivity: Date;
     private internalState$: BehaviorSubject<ClientState> = new BehaviorSubject("pending" as ClientState);
@@ -42,7 +45,7 @@ export class ClientHandler {
         );
     }
     
-    constructor(ws: WebSocket, req: Request, private authentication: AuthenticationService) {
+    constructor(ws: WebSocket, req: Request) {
         this.ws = ws;
         this.lastActivity = new Date();
 
@@ -188,11 +191,10 @@ export class ClientHandler {
 
 export class WsApiV1 {
 
-    private log = LogService.instance;
     private handlers: ClientHandler[] = [];
 
-    constructor(private auth: AuthenticationService, private eventBus: EventService) {
-        this.eventBus.listen().subscribe(ev => this.handlers.forEach(h => h.send<EventMessage>({
+    constructor() {
+        Container.get(EventService).listen().subscribe(ev => this.handlers.forEach(h => h.send<EventMessage>({
             type: "event",
             action: ev.action,
             object: ev.object,
@@ -204,7 +206,7 @@ export class WsApiV1 {
         const router = Router();
 
         router.ws("/", (ws, req) => {
-            const handler = new ClientHandler(ws,req,this.auth);
+            const handler = new ClientHandler(ws,req);
             handler.close$.pipe(take(1)).subscribe(() => this.handlers.splice(this.handlers.indexOf(handler),1))
             this.handlers.push(handler);
         });

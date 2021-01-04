@@ -1,10 +1,6 @@
 import { NextFunction, Request, Response, Router } from "express";
-import { User } from "../../models";
-import { AuthenticationService } from "../../services/authentication.service/authentication.service";
-import { DatabaseService } from "../../services/database.service/database.service";
-import { EventService } from "../../services/event.service";
+import { Container } from "typescript-ioc";
 import { ObjectService } from "../../services/object.service";
-import { RouteService } from "../../services/route.service/route.service";
 import { UserService } from "../../services/user.service";
 import { ApiResponse } from "../utils/api-response";
 import { AuthenticationApi } from "./authentication";
@@ -12,14 +8,6 @@ import { ObjectApi } from "./objects";
 import { RoutesApi } from "./routes";
 
 export class ApiV1 {
-
-    constructor(
-        private auth: AuthenticationService,
-        private db: DatabaseService,
-        private events: EventService,
-        private routes: RouteService,
-        private users: UserService
-    ) { }
 
     public get router(): Router {
         const router = Router();
@@ -32,19 +20,19 @@ export class ApiV1 {
         });
 
         /* Authentication API */
-        new AuthenticationApi(this.auth, this.db).install(router);
+        new AuthenticationApi().install(router);
 
         /* Routes API */
-        new RoutesApi(this.auth, this.routes).install(router);
+        new RoutesApi().install(router);
 
         /* Users API */
-        new ObjectApi(this.auth,this.users).install(router,"users");
+        new ObjectApi(Container.get(UserService)).install(router,"users");
 
         /* Node API */
-        new ObjectApi(this.auth,new ObjectService(this.db,this.events,"node")).install(router,"nodes");
+        new ObjectApi(new ObjectService("node")).install(router,"nodes");
         
         /* Device API */
-        new ObjectApi(this.auth,new ObjectService(this.db,this.events,"device")).install(router,"devices");
+        new ObjectApi(new ObjectService("device")).install(router,"devices");
 
         return router;
     }

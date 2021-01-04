@@ -1,32 +1,23 @@
 import expressBodyParser from "body-parser";
 import express, { Express, NextFunction, Request, Response } from "express";
 import expressWs from "express-ws";
+import { Inject, OnlyInstantiableByContainer, Singleton } from "typescript-ioc";
 import { ApiV1 } from "../api/api-v1";
 import { ApiResponse } from "../api/utils/api-response";
 import { ApiError } from "../api/utils/api.error";
 import { WsApiV1 } from "../api/ws-api-v1";
-import { AuthenticationService } from "./authentication.service/authentication.service";
 import { ConfigService } from "./config.service";
-import { DatabaseService } from "./database.service/database.service";
-import { EventService } from "./event.service";
 import { LogService } from "./log.service";
-import { RouteService } from "./route.service/route.service";
-import { UserService } from "./user.service";
 
-
+@Singleton
+@OnlyInstantiableByContainer
 export class ApiService {
 
     private app: Express;
-    private log: LogService = LogService.instance
+    @Inject private log: LogService;
+    @Inject private config: ConfigService;
 
-    constructor(
-        private config: ConfigService,
-        private db: DatabaseService, 
-        private auth: AuthenticationService,
-        private routes: RouteService,
-        private events: EventService,
-        private users: UserService
-    ) {
+    constructor() {
         this.app = express();
     }
 
@@ -45,10 +36,10 @@ export class ApiService {
         this.app.use(expressBodyParser.json());
 
         // Install API
-        this.app.use("/v1", new ApiV1(this.auth,this.db,this.events,this.routes,this.users).router);
+        this.app.use("/v1", new ApiV1().router);
 
         // Install WebSocket API Version
-        this.app.use("/ws/v1", new WsApiV1(this.auth,this.events).router);
+        this.app.use("/ws/v1", new WsApiV1().router);
 
         // Cleanup request data, send response
         this.app.use(this.mwRequestEnd.bind(this));

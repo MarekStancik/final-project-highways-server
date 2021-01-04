@@ -1,12 +1,13 @@
+import { OnlyInstantiableByContainer, Singleton } from "typescript-ioc";
 import { User } from "../models";
 import { AuthenticationService } from "./authentication.service/authentication.service";
-import { DatabaseService } from "./database.service/database.service";
-import { EventService } from "./event.service";
 import { ObjectService } from "./object.service";
 
+@Singleton
+@OnlyInstantiableByContainer
 export class UserService extends ObjectService<User>{
-    constructor(db: DatabaseService, events: EventService) {
-        super(db, events, "user")
+    constructor() {
+        super("user")
     }
 
     public async list(query?: any): Promise<User[]> {

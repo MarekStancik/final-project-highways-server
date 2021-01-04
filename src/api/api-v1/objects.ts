@@ -1,4 +1,5 @@
 import { NextFunction, Request, Response, Router } from "express";
+import { Inject } from "typescript-ioc";
 import { DatabaseObject } from "../../models/database-object.model";
 import { ResourceType } from "../../models/permission.model";
 import { AuthenticationService } from "../../services/authentication.service/authentication.service";
@@ -8,10 +9,10 @@ import { ApiResponse } from "../utils/api-response";
 
 export class ObjectApi<T extends DatabaseObject> {
 
-    private log: LogService = LogService.instance;
+    @Inject private log: LogService;
+    @Inject private auth: AuthenticationService;
 
     constructor(
-        private auth: AuthenticationService,
         private objectService: ObjectService<T>
     ) {
         if (this.objectService.entityType === "session") {
@@ -21,13 +22,32 @@ export class ObjectApi<T extends DatabaseObject> {
 
     public install(router: Router,path: string): void {
         const entityType = this.objectService.entityType as ResourceType;
-        router.get(`/${path}`, this.auth.mwfRequireAuthentication(), this.auth.mwfRequireAuthorization(entityType,"read"), this.mwList.bind(this));
-        router.post(`/${path}`, this.auth.mwfRequireAuthentication(), this.auth.mwfRequireAuthorization(entityType,"create"), this.mwCreate.bind(this));
-        router.delete(`/${path}/:id`, this.auth.mwfRequireAuthentication(), this.auth.mwfRequireAuthorization(entityType,"delete"), this.mwDelete.bind(this));
-        router.put(`/${path}/:id`,this.auth.mwfRequireAuthentication(),this.auth.mwfRequireAuthorization(entityType,"update"),this.mwUpdate.bind(this));
+        router.get(`/${path}`, 
+            this.auth.mwfRequireAuthentication(), 
+            this.auth.mwfRequireAuthorization(entityType,"read"), 
+            this.mwList.bind(this)
+        );
+
+        router.post(`/${path}`, 
+            this.auth.mwfRequireAuthentication(), 
+            this.auth.mwfRequireAuthorization(entityType,"create"), 
+            this.mwCreate.bind(this)
+        );
+
+        router.delete(`/${path}/:id`, 
+            this.auth.mwfRequireAuthentication(), 
+            this.auth.mwfRequireAuthorization(entityType,"delete"), 
+            this.mwDelete.bind(this)
+        );
+
+        router.put(`/${path}/:id`,
+            this.auth.mwfRequireAuthentication(),
+            this.auth.mwfRequireAuthorization(entityType,"update"),
+            this.mwUpdate.bind(this)
+        );
     }
 
-    public async mwUpdate(req: Request, res: Response, next: NextFunction) {
+    public async mwUpdate(req: Request, res: Response, next: NextFunction): Promise<void> {
         try {
             if (!req.params?.id) {
                 return ApiResponse.Error.BadRequest(next,"id was not provided");
@@ -43,12 +63,12 @@ export class ObjectApi<T extends DatabaseObject> {
         }
     }
 
-    public async mwList(req: Request, res: Response, next: NextFunction) {
+    public async mwList(req: Request, res: Response, next: NextFunction): Promise<void> {
         const list = await this.objectService.list();
         return ApiResponse.Success.Ok(req, next, list);
     }
 
-    public async mwDelete(req: Request, res: Response, next: NextFunction) {
+    public async mwDelete(req: Request, res: Response, next: NextFunction): Promise<void> {
         try {
             if (!req.params?.id) {
                 return ApiResponse.Error.BadRequest(next,"id was not provided");
@@ -61,7 +81,7 @@ export class ObjectApi<T extends DatabaseObject> {
         }
     }
 
-    public mwCreate(req: Request, res: Response, next: NextFunction) {
+    public mwCreate(req: Request, res: Response, next: NextFunction): void {
         try {
             if (!req.body) {
                 return ApiResponse.Error.BadRequest(next, "body was not provided");

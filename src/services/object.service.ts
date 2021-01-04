@@ -1,14 +1,14 @@
+import { Inject } from "typescript-ioc";
 import { DatabaseObject, EntityType } from "../models/database-object.model";
 import { DatabaseService } from "./database.service/database.service";
 import { EventService } from "./event.service";
 
 export class ObjectService<T extends DatabaseObject> {
+    @Inject protected db: DatabaseService;
+    @Inject protected eventBus: EventService;
     
     constructor(
-        protected db: DatabaseService, 
-        protected eventBus: EventService, 
         public readonly entityType: EntityType) {
-
     }
 
     public list(query?: any): Promise<T[]>{

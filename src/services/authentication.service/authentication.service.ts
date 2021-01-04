@@ -1,27 +1,24 @@
-import { Request, Response, NextFunction } from "express";
-import crypto from "crypto"
-import * as uuid from "uuid"
+import crypto from "crypto";
+import { NextFunction, Request, Response } from "express";
+import { Inject, OnlyInstantiableByContainer, Singleton } from "typescript-ioc";
+import * as uuid from "uuid";
 import { ApiResponse } from "../../api/utils/api-response";
-import { UserSession, UserSpec, User } from "../../models";
-import { LogService } from "../log.service";
-import { AuthenticationError } from "./authentication.error";
-import { DatabaseService } from "../database.service/database.service";
+import { User, UserSession, UserSpec } from "../../models";
 import { AuthorizationType, OperationType, Permissions, ResourceType } from "../../models/permission.model";
-import { EntityType } from "../../models/database-object.model";
+import { DatabaseService } from "../database.service/database.service";
+import { AuthenticationError } from "./authentication.error";
 
+@Singleton
+@OnlyInstantiableByContainer
 export class AuthenticationService {
+
+    @Inject private database: DatabaseService
 
     public static passHash(pass: string): string {
         return crypto.createHash("sha256").update(pass, "utf8").digest("hex")
     }
 
     private static readonly SESSION_TOKEN_HEADER = "X-Session-Token";
-
-    private log: LogService = LogService.instance;
-
-    constructor(private database: DatabaseService) {
-
-    }
 
     public async authenticate(username: string, password: string): Promise<UserSession> {
         const user = await this.authenticateUser(username, password);

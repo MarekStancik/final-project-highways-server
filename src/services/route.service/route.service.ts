@@ -1,8 +1,8 @@
 import { Route } from "../../models/route.model"
 
-export interface RouteService {
-    list(query?: any): Route[];
-    create(route: Route): Route;
-    delete(id: string): Route;
-    update(route: Route): Route;
+export abstract class RouteService {
+    abstract list(query?: any): Route[];
+    abstract create(route: Route): Route;
+    abstract delete(id: string): Route;
+    abstract update(route: Route): Route;
 }

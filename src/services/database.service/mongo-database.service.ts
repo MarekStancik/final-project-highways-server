@@ -1,19 +1,19 @@
 import { Collection, Db, MongoClient, ObjectId } from "mongodb";
 import { timer } from "rxjs/internal/observable/timer";
 import { first } from "rxjs/operators";
+import { Singleton, OnlyInstantiableByContainer, Inject } from "typescript-ioc";
 import { DatabaseObject, EntityType } from "../../models/database-object.model";
 import { ConfigService } from "../config.service";
 import { LogService } from "../log.service";
 import { DatabaseService } from "./database.service";
 
-export class MongoDatabaseService implements DatabaseService {
+@Singleton
+@OnlyInstantiableByContainer
+export class MongoDatabaseService extends DatabaseService {
 
     private client: MongoClient;
-    private log: LogService = LogService.instance
-
-    constructor(private config: ConfigService) {
-        
-    }
+    @Inject private log: LogService;
+    @Inject private config: ConfigService
 
     public async initialize() : Promise<void> {
         const {host,port} = this.config.data.db;
@@ -65,7 +65,7 @@ export class MongoDatabaseService implements DatabaseService {
     public delete<T extends DatabaseObject>(type: EntityType,id: string): Promise<T>;
     public delete<T extends DatabaseObject>(type: EntityType,object: T): Promise<T>;
     public async delete<T extends DatabaseObject>(type: EntityType,idOrObj?: string | T): Promise<void>{
-        let id = typeof idOrObj === "string" ? idOrObj : (idOrObj as T).id;
+        const id = typeof idOrObj === "string" ? idOrObj : (idOrObj as T).id;
         await this.collection(type).deleteOne(this.buildQuery({ id }));
 
     }
