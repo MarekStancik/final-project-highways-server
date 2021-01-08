@@ -4,7 +4,7 @@ import { Inject, OnlyInstantiableByContainer, Singleton } from "typescript-ioc";
 import * as uuid from "uuid";
 import { ApiResponse } from "../../api/utils/api-response";
 import { User, UserSession, UserSpec } from "../../models";
-import { AuthorizationType, OperationType, Permissions, ResourceType } from "../../models/permission.model";
+import { OperationType, Permissions, ResourceType } from "../../models/permission.model";
 import { DatabaseService } from "../database.service/database.service";
 import { AuthenticationError } from "./authentication.error";
 
@@ -21,13 +21,13 @@ export class AuthenticationService {
     private static readonly SESSION_TOKEN_HEADER = "X-Session-Token";
 
     public async authenticate(username: string, password: string): Promise<UserSession> {
-        const user = await this.authenticateUser(username, password);
+        const userSpec = await this.authenticateUser(username, password);
         const session = await this.database.create("session",{} as UserSession);
-        session.user = user;
+        session.user = userSpec;
         session.token = uuid.v4();
         session.lifetime = 20000000;
         session.startDate = session.lastRequestDate = new Date();
-        session.permissions = Permissions[user.user.authorization];
+        session.permissions = Permissions[userSpec.user.authorization];
         return await this.database.update("session",session);
     }
 
@@ -86,7 +86,7 @@ export class AuthenticationService {
                 }
                 const session = await this.getSessionByToken(req.session.token);
                 const user = await this.database.get<User>("user", { id: session.user.id });
-                if (this.evaluatePermissions(resource, operation, user.authorization)) {
+                if (Permissions[user.authorization]?.[resource]?.includes(operation)) {
                     return next();
                 }
                 return ApiResponse.Error.PermissionDenied(next);
@@ -105,9 +105,5 @@ export class AuthenticationService {
             throw new AuthenticationError("Session has already expired", "SESSION_EXPIRED");
         }
         return session;
-    }
-
-    private evaluatePermissions(resource: ResourceType, operation: OperationType, role: AuthorizationType): boolean {
-        return Permissions[role]?.[resource]?.includes(operation);
     }
 }
